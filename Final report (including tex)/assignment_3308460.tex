@@ -1,0 +1,92 @@
+\documentclass[11pt,a4paper,numbers=endperiod]{article}
+
+\usepackage[a4paper, left=20mm, right=20mm, top=10mm, bottom=25mm]{geometry}
+\usepackage[english]{babel}			
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{stmaryrd}
+\usepackage{ulem}
+\usepackage{lscape}
+\usepackage{setspace}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{amsmath}
+\usepackage{chngcntr}
+\usepackage{empheq, extarrows}
+\usepackage{enumitem,csquotes}
+\usepackage{blindtext}
+\usepackage{anyfontsize}
+\counterwithout{figure}{section}
+\counterwithout{figure}{subsection}
+
+\usepackage{graphicx}
+
+\title{Take-Home-Exam: Introduction to Statistical Machine Learning}
+\author{Name: Nikolaus Schäfer, \hspace*{1mm} Matrikelnummer: 3308460}
+
+\begin{document}
+	\maketitle
+	\section{Problem}
+	\onehalfspacing
+	The first step of this little project is to find the relevant variables of the data set. We are confronted with a set of 14 predictor variables (I left out 'obs\_id' for obvious reasons), and to create a model with all of them would not only result in a high computational demand, but also in a poor interpretability. In this problem (Poblem 1) I will make a pre-selection of the variables, meaning I will try to detect all irrelevant (or uninterpretable) variables, which clearly have little to no connection (or have uninterpretable data) to the probability of default.\\
+ 	After first looking at the data, I noticed, that for the ''emp\_length'' variable exist a few missing values. Computing the percentage of missing values in the training set and in the test set gave about 5.37 \% and 5.10\% respectively. Figure 1 shows the default percentages for each employment length category. 
+ 	\begin{figure}[!ht]
+ 		\centering
+ 		\includegraphics[scale=0.7]{DefaultEmp} 
+ 		\caption{Default \% depending on Employment length}
+ 	\end{figure}
+ 	As all categories seem to have a default percentage between 18 and 20 \%, the problem arises in which category one should put the observations with the missing values. Since the ''n/a''-category actually has the highest default percentage (see Figure 1), assigning the missing values to the mode of the other categories would clearly distort the relationship between the employment length and the probability of default. Consequently I have decided not to include the variable ''emp\_length'' in my prediction model.\\
+	The second variable I have filtered out is the ''addr\_state''-variable, since it has no causal connection to the probability of default. This is also backed up by some statistical data. Figure 2 shows the Default percentages per State. 
+	\begin{figure}[!ht]
+		\includegraphics[scale=0.7]{DefaultState} 
+		\caption{Default \% per State}
+	\end{figure}
+	Most of the default percentages are between 15 and 25 percent. Only Idaho (0 \%) and Washington D.C (8.2 \%) seem to stand out. This is, however, due to the fact, that in our training data, there is only one observation for Idaho and only 124 observations for Washington D.C. If one compares this to the number of observations in Texas (4053 obs.) for example, it becomes evident fairly quickly that an inclusion of the ''addr\_state''-variable makes no sense at all.\\
+	Moreover, the categorical variable ''verif\_status'' seems have a counter-intuitive relationship to the default probability. As can be seen in Figure 3, costumers with verfied income were actually more likely to default than customers with a non-verified income.
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[scale= 0.6]{DefaultVerif}
+		\caption{Default \% depending on verification status}
+	\end{figure}
+	However, one would actually expect it to be the other way around, since some might try to lie about their income in order to receive a credit they would not have received with a their actual income. As a result, since I do not believe, that this counter-intuitive relationship to be equally valid for the test set I will not include the ''verif\_status'' variable in my model.\\
+	After having eliminated a few variables, which seem to be irrelvant or have a strange relationship to the probability of default, I also want to look for variables which should definitely be included in the model (e.g. are highly correlated to the default probability).  
+ 	Logically, one would expect the ''grade''-variable to be strongly correlated with the default probability. Indeed, Figure 4 verifies this expectation. Customers with loan grade 'A' (highest creditworthiness) defaulted significantly less (5.4 \%) than curstomers with loan grade 'G' (lowest creditworthiness, 47.3 \%).  
+	\begin{figure}[!ht] 
+		\centering
+		\includegraphics[scale= 0.6]{DefaultGrade}
+		\caption{Default \% depending on loan grade}
+	\end{figure}
+	Therefore, one would expect the regression coefficients for the different grade levels to be fairly high. Another important variable that needs to be considered is the ''int\_rate''-variable. Intuitively, a higher interest rate on the credit should also lead to a higher probability of default, since the amount the customer has to pay back to the bank is much larger in comparison to customers with lower interest rates. 
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[scale= 0.65]{DefaultRate}
+		\caption{Default \% depending on the Interest Rate}
+	\end{figure}
+	Figure 5 displays a logistic regression of the interest rate on the probability of default. The graph clearly confirms my expectation of a higher default probability with increasing interest rates. For that reason, as one can see in Problem 2 (!!Spoiler!!), these two variables will be of great significance in my prediction model. \newpage
+	
+	\newgeometry{margin = 2 cm}
+	\onehalfspacing
+	\section{Problem}
+	
+	In this problem I will use the remaining set of variables, that were not dropped in problem 1 to find a statistical model for predicting defaults.\\
+	Firstly, I divided the training data set into my own training and test data set. I used a 2/3 to 1/3 split (meaning I used 2/3 of the data for training and 1/3 for testing). To compare my results when evaluating my test data with the predictions, I created two more (and different) training and test data sets with the same split.\\
+	My plan was to use a generalized linear model (glm() in R) to conduct the predictions. Since we are confronted with a binary dependent variable, I used the binomial error family. Here I have the options of choosing the logistic model (can be specified with (link = logit) in R, but is actually the default of the binomial error family), the complementary log-log link function (can be specified with (link = cloglog)) or the probit model (can be specified with (link = probit)).\\
+	Now, only two questions remain: Which of the three models work best on our specific data set and which of the 11 remaining predictor variables should be included in the final model. In order to answer these questions I performed each of the three regressions (logit, probit and cloglog) on all three data sets first for all 11 variables and then 11 times for 10 variables, each time dropping a different variable of the original 11. The results are shown in Figure 6.
+	\begin{figure}[!ht] 
+		\centering
+		\includegraphics[scale=.8]{findmodel1}
+		\caption{Finding the optimal model}
+	\end{figure}
+	The evaluation of the predictions on the test data was done with the evaluation function given in Problem 3. However, for comparison reasons, I divided the output by the number of input values. Additionally, the rows 'Maximum Set 1', 'Maximum Set 2' and 'Maximum Set 3' each show the maximum value of the evaluation of the three models on their particular data set \footnote{In other words: The rows show the model which performed best on the particular data set}. The 'mean clog' row gives the mean of the cloglog evaluation on all 3 data sets for each variable set. The rows 'Accuracy: clog' and 'AUC: clog' indicate the accuracy of the cloglog evaluation with a threshold of 0.5 and the area under the ROC-curve of set 1 respectively \footnote{The last two rows I calculated purely out of fun. They are not really used for picking the model}.\\
+	Figure 6 clearly shows, that the best model for this case (or rather the seed 567 in R) is the cloglog model performed on all 11 variables. I changed the seeds numerous times to see if the conclusion of choosing this model would stay the same (I haven't depicted all the tables due to space reasons). I actually attained slightly different results for some seeds, where another model or another set of variables performed a little better than this one. However, on average the cloglog model together with all 11 variables achieved the best results.\\
+	Therefore, I decided to use this model to predict the probability of default.\\
+	Figure 7 shows summary of this regression, this time, performed on the whole training data. 
+	\begin{figure}[!ht] 
+		\centering
+		\includegraphics[scale=.8]{reg}
+		\caption{cloglog Regression}
+	\end{figure}
+	As mentioned in Problem 1, the ''grade'' variable and the interest rate seem to be of great importance. This can be seen by the low p-values and the relatively high coefficient estimates for these variables.  
+\end{document}
